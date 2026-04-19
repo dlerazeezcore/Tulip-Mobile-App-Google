@@ -10,6 +10,7 @@ import { TulipLogo } from './components/TulipLogo';
 import Home from './pages/Home';
 import Bookings from './pages/Bookings';
 import Profile from './pages/Profile';
+import ESim from './pages/ESim';
 
 // Helper to convert ISO country code to Emoji Flag
 const getFlagEmoji = (countryCode: string) => {
@@ -27,6 +28,7 @@ export default function App() {
   // App Navigation State
   const [activeTab, setActiveTab] = useState<'home' | 'bookings' | 'profile'>('home');
   const [activeService, setActiveService] = useState<ServiceType>('flights');
+  const [homeView, setHomeView] = useState<'main' | 'esim'>('main');
   
   // Custom Auth Overlay State
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -61,31 +63,17 @@ export default function App() {
     { sender: 'agent', text: 'Thank you for reaching out. An agent will be with you shortly.' }
   ]);
 
-  // Handle Geolocation Lookup (runs once)
+  // support static mode
   useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.country_calling_code && data.country) {
-          setCountryCodeDial(data.country_calling_code);
-          setCountryFlag(getFlagEmoji(data.country));
-        }
-      })
-      .catch((err) => {
-        console.warn("Failed IP location check, defaulting to Iraq +964", err);
-      });
+    // Mock local detection
+    setCountryCodeDial('+964');
+    setCountryFlag('🇮🇶');
   }, []);
 
-  // Initialize Recaptcha globally for Firebase
+  // Recaptcha init is not needed in mock mode
   useEffect(() => {
-    if (!loading) {
-      try {
-        setupRecaptcha('recaptcha-container');
-      } catch (err) {
-        console.error("Recaptcha init failed", err);
-      }
-    }
-  }, [loading, setupRecaptcha]);
+    // No-op for UI only mode
+  }, [loading]);
 
   // Auth Submit Handlers
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -162,40 +150,69 @@ export default function App() {
         )}
         
         {/* Top Header */}
-        <header className="px-6 py-6 flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-md z-40">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center text-white">
-              <TulipLogo size={24} />
+        {activeTab === 'home' && homeView === 'main' && (
+          <header className="px-6 py-6 flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-md z-40">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center text-white">
+                <TulipLogo size={24} />
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                  {user ? 'Good Morning,' : 'Welcome to'}
+                </p>
+                <h1 className="text-xl font-bold font-display">
+                  {user ? (profile?.displayName?.split(' ')[0] || 'Traveler') : 'Tulip Booking'}
+                </h1>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                {user ? 'Good Morning,' : 'Welcome to'}
-              </p>
-              <h1 className="text-xl font-bold font-display">
-                {user ? (profile?.displayName?.split(' ')[0] || 'Traveler') : 'Tulip Booking'}
-              </h1>
+            <div className="relative cursor-pointer" onClick={() => handleProtectedAction(() => setActiveTab('profile'))}>
+               <div className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center text-muted-foreground relative">
+                 <Bell size={20} />
+                 {user && <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>}
+               </div>
             </div>
-          </div>
-          <div className="relative cursor-pointer" onClick={() => handleProtectedAction(() => setActiveTab('profile'))}>
-             <div className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center text-muted-foreground relative">
-               <Bell size={20} />
-               {user && <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>}
-             </div>
-          </div>
-        </header>
+          </header>
+        )}
+        
+        {/* Render simple headers for other tabs if on their main view */}
+        {(activeTab !== 'home' || homeView !== 'main') && (
+           <div className="h-4"></div> /* Space for the sub-page headers */
+        )}
 
         {/* Content Views */}
         <main className="flex-1 px-6 relative z-10">
           <AnimatePresence mode="wait">
             
-            {/* HOME VIEW (Open to all) */}
-            {activeTab === 'home' && <Home handleProtectedAction={handleProtectedAction} />}
+            {/* HOME VIEW (Explore) */}
+            {activeTab === 'home' && (
+              <motion.div key={homeView === 'main' ? 'home-main-view' : 'home-esim-view'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+                {homeView === 'main' ? (
+                  <Home onSelectESim={() => setHomeView('esim')} handleProtectedAction={handleProtectedAction} />
+                ) : (
+                  <ESim 
+                    onBack={() => setHomeView('main')} 
+                    onGoToBookings={() => { setHomeView('main'); setActiveTab('bookings'); }}
+                    isDark={isDark} 
+                    setShowAuthModal={setShowAuthModal} 
+                    user={user} 
+                  />
+                )}
+              </motion.div>
+            )}
 
             {/* BOOKINGS VIEW (Protected logic inside) */}
-            {activeTab === 'bookings' && <Bookings setActiveTab={setActiveTab} setShowAuthModal={setShowAuthModal} />}
+            {activeTab === 'bookings' && (
+              <motion.div key="bookings-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+                <Bookings setActiveTab={setActiveTab} setShowAuthModal={setShowAuthModal} />
+              </motion.div>
+            )}
 
             {/* PROFILE VIEW (Protected logic inside) */}
-            {activeTab === 'profile' && <Profile isDark={isDark} setIsDark={setIsDark} setShowSupportChat={setShowSupportChat} setShowAuthModal={setShowAuthModal} />}
+            {activeTab === 'profile' && (
+              <motion.div key="profile-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+                <Profile isDark={isDark} setIsDark={setIsDark} setShowSupportChat={setShowSupportChat} setShowAuthModal={setShowAuthModal} />
+              </motion.div>
+            )}
 
           </AnimatePresence>
         </main>
@@ -237,52 +254,52 @@ export default function App() {
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="absolute inset-0 bg-background z-[100] flex flex-col"
             >
-               <header className="px-6 py-6 flex items-center justify-between border-b border-border">
+               <header className="px-6 py-4 flex items-center justify-between border-b border-border">
                  <button onClick={() => setShowAuthModal(false)} className="p-2 bg-muted rounded-full text-muted-foreground hover:text-foreground transition-colors">
                    <ChevronRight size={20} className="rotate-90" />
                  </button>
                </header>
                
-               <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12">
-                 <div className="w-16 h-16 primary-gradient rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg shadow-primary/20">
-                   <TulipLogo size={32} />
+               <div className="flex-1 flex flex-col justify-start items-center p-6 pt-10">
+                 <div className="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center text-white mb-3 shadow-lg shadow-primary/20">
+                   <TulipLogo size={20} />
                  </div>
                  
-                 <h2 className="text-3xl font-display font-bold mb-3 text-center">Secure Sign In</h2>
-                 <p className="text-muted-foreground text-sm text-center mb-10 max-w-xs leading-relaxed">
+                 <h2 className="text-xl font-display font-bold mb-1 text-center">Secure Sign In</h2>
+                 <p className="text-muted-foreground text-[10px] text-center mb-5 max-w-[220px] leading-relaxed font-medium">
                    Enter your mobile number to sign in or create a new account via secure OTP.
                  </p>
 
-                 <div className="w-full max-w-sm">
+                 <div className="w-full max-w-[320px]">
                     {authStep === 'phone' ? (
-                      <form onSubmit={handleSendOtp} className="space-y-6">
+                      <form onSubmit={handleSendOtp} className="space-y-3">
                         {authError && (
-                          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 px-4 py-3 rounded-xl text-sm text-center">
+                          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 px-4 py-2 rounded-xl text-[10px] text-center mb-1">
                             {authError.includes('Firebase') ? 'Security check failed. Please try again.' : authError}
                           </div>
                         )}
 
                         {/* Auth Mode Toggle */}
-                        <div className="flex bg-muted p-1 rounded-xl">
-                          <button type="button" onClick={() => setAuthMethod('sms')} className={`flex-1 py-3 px-4 text-xs font-bold rounded-lg transition-all flex justify-center items-center gap-2 ${authMethod === 'sms' ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}>
-                            <Phone size={14} /> SMS
+                        <div className="flex bg-muted p-1 rounded-xl mb-1">
+                          <button type="button" onClick={() => setAuthMethod('sms')} className={`flex-1 py-2 px-4 text-[9px] font-bold rounded-lg transition-all flex justify-center items-center gap-2 ${authMethod === 'sms' ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}>
+                            <Phone size={10} /> SMS
                           </button>
-                          <button type="button" onClick={() => setAuthMethod('whatsapp')} className={`flex-1 py-3 px-4 text-xs font-bold rounded-lg transition-all flex justify-center items-center gap-2 ${authMethod === 'whatsapp' ? 'bg-green-500 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}>
-                            <MessageCircle size={14} /> WhatsApp
+                          <button type="button" onClick={() => setAuthMethod('whatsapp')} className={`flex-1 py-2 px-4 text-[9px] font-bold rounded-lg transition-all flex justify-center items-center gap-2 ${authMethod === 'whatsapp' ? 'bg-green-500 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}>
+                            <MessageCircle size={10} /> WhatsApp
                           </button>
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Mobile Number</label>
+                        <div className="space-y-1">
+                          <label className="text-[8px] font-black uppercase tracking-widest ml-1 text-muted-foreground opacity-60">Mobile Number</label>
                           <div className="flex gap-2">
                             {/* Country Dial Box */}
-                            <div className="w-[100px] bg-muted border border-border rounded-xl flex items-center justify-center gap-1.5 focus-within:ring-1 focus-within:ring-primary/50 relative overflow-hidden shrink-0">
-                               <span className="text-lg absolute left-3">{countryFlag}</span>
+                            <div className="w-[75px] bg-muted border border-border rounded-xl flex items-center justify-center gap-1.5 focus-within:ring-1 focus-within:ring-primary/50 relative overflow-hidden shrink-0">
+                               <span className="text-sm absolute left-2">{countryFlag}</span>
                                <input 
                                  type="text" 
                                  value={countryCodeDial} 
                                  onChange={(e) => setCountryCodeDial(e.target.value)}
-                                 className="w-full h-14 bg-transparent pl-10 pr-2 text-foreground font-mono text-sm focus:outline-none"
+                                 className="w-full h-10 bg-transparent pl-7 pr-1 text-foreground font-mono text-[11px] focus:outline-none"
                                />
                             </div>
                             
@@ -293,50 +310,49 @@ export default function App() {
                               value={phoneNumber}
                               onChange={(e) => setPhoneNumber(e.target.value)}
                               placeholder="750 123 4567" 
-                              className="input-field flex-1 h-14 font-mono text-lg tracking-wider" 
+                              className="input-field flex-1 h-10 font-mono text-[13px] tracking-wider px-3" 
                               disabled={isAuthLoading}
                             />
                           </div>
-                          <p className="text-[10px] text-muted-foreground mt-2 text-center opacity-70">Leading zeros will be automatically removed.</p>
                         </div>
                         <button 
                           type="submit"
                           disabled={isAuthLoading || !phoneNumber}
-                          className="w-full h-14 bg-primary text-white font-bold rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2 disabled:opacity-50 mt-4"
+                          className="w-full h-11 bg-primary text-white font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2 disabled:opacity-50"
                         >
-                          {isAuthLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Send Dynamic Code'}
+                          {isAuthLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Send Dynamic Code'}
                         </button>
                         
-                        <div className="pt-6 border-t border-border mt-8">
+                        <div className="pt-3 border-t border-border mt-3">
                           <button 
                             type="button" 
                             onClick={() => { loginAsDemo(); setShowAuthModal(false); }}
-                            className="w-full h-12 border border-primary/40 text-primary font-bold rounded-xl hover:bg-primary/10 transition-all text-xs uppercase tracking-widest active:scale-95"
+                            className="w-full h-9 border border-primary/20 text-primary font-bold rounded-xl hover:bg-primary/5 transition-all text-[9px] uppercase tracking-widest active:scale-95"
                           >
                             Use Test Account
                           </button>
                         </div>
                       </form>
                     ) : (
-                      <form onSubmit={handleVerifyOtp} className="space-y-6">
+                      <form onSubmit={handleVerifyOtp} className="space-y-3">
                         {authError && (
-                          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 px-4 py-3 rounded-xl text-sm text-center">
+                          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 px-4 py-2 rounded-xl text-[10px] text-center">
                             {authError}
                           </div>
                         )}
-                        <div className="text-center mb-8 bg-muted p-4 rounded-2xl border border-border">
-                          <p className="text-xs text-muted-foreground mb-1">Code sent to</p>
-                          <p className="text-foreground font-mono font-bold tracking-wider">{countryCodeDial} {phoneNumber}</p>
-                          <button type="button" onClick={() => setAuthStep('phone')} className="text-primary text-[10px] uppercase tracking-widest font-bold mt-3 hover:underline">Change Number</button>
+                        <div className="text-center mb-2 bg-muted p-2 rounded-xl border border-border">
+                          <p className="text-[9px] text-muted-foreground mb-0.5 font-bold uppercase tracking-tighter">Code sent to</p>
+                          <p className="text-foreground font-mono font-bold tracking-wider text-xs">{countryCodeDial} {phoneNumber}</p>
+                          <button type="button" onClick={() => setAuthStep('phone')} className="text-primary text-[8px] uppercase tracking-widest font-black mt-1 hover:underline">Change Number</button>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           <input 
                             type="text" 
                             required
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value)}
                             placeholder="• • • • • •" 
-                            className="input-field w-full h-16 text-center font-mono text-2xl tracking-[1em]" 
+                            className="input-field w-full h-12 text-center font-mono text-base tracking-[0.4em] pl-3" 
                             maxLength={6}
                             disabled={isAuthLoading}
                           />
@@ -344,9 +360,9 @@ export default function App() {
                         <button 
                           type="submit"
                           disabled={isAuthLoading || otpCode.length < 6}
-                          className="w-full h-14 bg-primary text-white font-bold rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2 disabled:opacity-50 mt-4"
+                          className="w-full h-11 bg-primary text-white font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2 disabled:opacity-50 mt-1"
                         >
-                           {isAuthLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Verify & Enter'}
+                           {isAuthLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Verify & Enter'}
                         </button>
                       </form>
                     )}

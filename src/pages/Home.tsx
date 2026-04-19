@@ -4,9 +4,10 @@ import { Plane, Hotel, Smartphone, Car, ChevronRight } from 'lucide-react';
 
 interface HomeProps {
   handleProtectedAction: (action: () => void) => void;
+  onSelectESim: () => void;
 }
 
-export default function Home({ handleProtectedAction }: HomeProps) {
+export default function Home({ handleProtectedAction, onSelectESim }: HomeProps) {
   return (
     <motion.div key="home" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
       {/* Search Bar Visual */}
@@ -47,7 +48,10 @@ export default function Home({ handleProtectedAction }: HomeProps) {
           </div>
         </div>
 
-        <div className="bg-card border border-border p-4 rounded-3xl flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50 cursor-pointer group shadow-sm relative overflow-hidden">
+        <div 
+          onClick={onSelectESim}
+          className="bg-card border border-border p-4 rounded-3xl flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50 cursor-pointer group shadow-sm relative overflow-hidden"
+        >
           <div className="absolute top-0 right-0 bg-primary text-white text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl z-10 shadow-md">Trending</div>
           <div className="w-14 h-14 primary-gradient rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
             <Smartphone size={24}/>
