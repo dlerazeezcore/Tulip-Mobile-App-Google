@@ -27,11 +27,18 @@ npx cap add android
 ### 4. Build and Sync
 Every time you make changes to the web code:
 ```bash
-npm run build
-npx cap sync
+npm run sync
 ```
 
-### 5. Open in Native IDEs
+### 5. Generate Icons & Splash (One-time or if branding changes)
+1. Create an `assets` folder in your project root.
+2. Put `icon-only.png` (1024x1024) and `splash.png` (2732x2732) inside it.
+3. Run:
+```bash
+npm run assets
+```
+
+### 6. Open in Native IDEs
 ```bash
 npx cap open ios
 npx cap open android
