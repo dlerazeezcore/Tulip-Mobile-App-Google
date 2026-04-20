@@ -151,7 +151,7 @@ export default function App() {
         
         {/* Top Header */}
         {activeTab === 'home' && homeView === 'main' && (
-          <header className="px-6 py-6 flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-md z-40">
+          <header className="px-6 py-6 pt-safe flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-md z-40">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center text-white">
                 <TulipLogo size={24} />
@@ -252,7 +252,7 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute inset-0 bg-background z-[100] flex flex-col"
+              className="absolute inset-0 bg-background z-[100] flex flex-col pt-safe"
             >
                <header className="px-6 py-4 flex items-center justify-between border-b border-border">
                  <button onClick={() => setShowAuthModal(false)} className="p-2 bg-muted rounded-full text-muted-foreground hover:text-foreground transition-colors">

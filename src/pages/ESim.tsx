@@ -134,7 +134,7 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex-1 flex flex-col pt-2 bg-background px-6"
+            className="flex-1 flex flex-col pt-safe bg-background px-6"
           >
             {/* Consistent Tulip Header */}
             <div className="flex items-center gap-4 mb-8">
@@ -235,7 +235,7 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex-1 flex flex-col h-full bg-background pt-2 px-3"
+            className="flex-1 flex flex-col h-full bg-background pt-safe px-3"
           >
             {/* Detail Header */}
             <div className="flex items-center gap-4 mb-8">
@@ -340,7 +340,7 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="flex-1 flex flex-col h-full bg-background pt-2 px-3"
+            className="flex-1 flex flex-col h-full bg-background pt-safe px-3"
           >
             {!orderSuccess ? (
               <div className="flex-1 flex flex-col h-full">

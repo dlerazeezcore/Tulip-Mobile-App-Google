@@ -1,0 +1,22 @@
+{
+  "name": "Tulip Booking",
+  "short_name": "Tulip",
+  "description": "Comprehensive travel booking platform for flights, hotels, and eSIM services.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/tulip-icon/192/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://picsum.photos/seed/tulip-icon/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

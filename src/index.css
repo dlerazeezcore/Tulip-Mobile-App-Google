@@ -162,3 +162,19 @@
   opacity: 0.05;
   mix-blend-mode: overlay;
 }
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility mt-safe {
+  margin-top: env(safe-area-inset-top);
+}
+
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
