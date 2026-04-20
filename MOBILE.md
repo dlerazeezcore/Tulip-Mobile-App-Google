@@ -37,6 +37,19 @@ npx cap open ios
 npx cap open android
 ```
 
+## 🛠 Troubleshooting Xcode "AppIcon" Errors
+If you see errors like `The app icon set named "AppIcon" did not have any applicable content` or `Distill failed`:
+
+1. **Remove Icon Transparency (Most Likely)**: iOS App Icons **cannot** have any transparency (alpha channel). 
+   - Open your icon image in Preview (on Mac) or another editor.
+   - Export it as a PNG and **uncheck** the "Alpha" box.
+   - Ensure the image is exactly 1024x1024.
+2. **Use Capacitor Assets**: For a full set of icons, we recommend using the generation tool:
+   - Create an `assets` folder in your project root.
+   - Put your 1024x1024 icon as `assets/icon-only.png`.
+   - Run: `npx @capacitor/assets generate --ios`
+3. **Xcode Settings**: In Xcode, ensure `App` -> `Build Settings` -> `Primary App Icon Set Name` matches `AppIcon`.
+
 ## Method 2: PWA (Progressive Web App)
 I have already prepared the `manifest.json` and mobile meta-tags in this project.
 - **Android**: Open the URL in Chrome -> "Add to Home Screen".
