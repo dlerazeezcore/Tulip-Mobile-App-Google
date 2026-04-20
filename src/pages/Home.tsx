@@ -10,71 +10,65 @@ interface HomeProps {
 export default function Home({ handleProtectedAction, onSelectESim }: HomeProps) {
   return (
     <motion.div key="home" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-      {/* Search Bar Visual */}
-      <div onClick={() => handleProtectedAction(() => {})} className="bg-muted border border-border h-14 rounded-2xl flex items-center px-4 mb-8 cursor-text">
-        <Smartphone size={20} className="text-muted-foreground mr-3" />
-        <span className="text-muted-foreground text-sm">Where do you want to go?</span>
-      </div>
-
-      {/* Services List (Premium Vertical Scalable Layout) */}
-      <div className="flex items-center justify-between mb-4 mt-2">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Our Services</h3>
-      </div>
-      
-      <div className="flex flex-col gap-3 pb-8">
-        <div className="bg-card border border-border p-4 rounded-3xl flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50 cursor-pointer group shadow-sm">
-          <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-            <Plane size={24}/>
-          </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-base">Flights</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">Book global itineraries seamlessly</p>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-            <ChevronRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-        </div>
-
-        <div className="bg-card border border-border p-4 rounded-3xl flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50 cursor-pointer group shadow-sm">
-          <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-            <Hotel size={24}/>
-          </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-base">Hotels</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">Find & reserve luxury stays</p>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-            <ChevronRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-        </div>
-
+      {/* Services List Grid (Premium Vertical Stack) */}
+      <div className="flex flex-col gap-3 pb-12 mt-2">
+        
+        {/* Action List */}
         <div 
           onClick={onSelectESim}
-          className="bg-card border border-border p-4 rounded-3xl flex items-center gap-4 active:scale-[0.98] transition-all hover:border-primary/50 cursor-pointer group shadow-sm relative overflow-hidden"
+          className="w-full bg-card border border-border/60 p-5 rounded-3xl flex items-center gap-5 active:scale-[0.98] transition-all hover:border-primary/50 cursor-pointer group shadow-sm hover:shadow-md relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 bg-primary text-white text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl z-10 shadow-md">Trending</div>
-          <div className="w-14 h-14 primary-gradient rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-            <Smartphone size={24}/>
+          <div className="absolute top-0 right-0 bg-primary/10 text-primary border-b border-l border-primary/20 text-[9px] font-black uppercase px-4 py-1.5 rounded-bl-xl z-10">Top Pick</div>
+          
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shrink-0">
+            <Smartphone size={26} strokeWidth={2} />
           </div>
           <div className="flex-1">
-            <h4 className="font-bold text-base">Global eSIMs</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">Instant connectivity worldwide</p>
+            <h4 className="font-bold text-lg text-foreground leading-tight">Global eSIMs</h4>
+            <p className="text-[11px] text-muted-foreground mt-1 font-medium">Instant connectivity in 150+ countries</p>
           </div>
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <ChevronRight size={18} className="text-primary" />
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground shrink-0 group-hover:translate-x-1 transition-transform">
+            <ChevronRight size={20} />
           </div>
         </div>
 
-        <div className="bg-card/50 border border-border border-dashed p-4 rounded-3xl flex items-center gap-4 cursor-not-allowed opacity-60">
-          <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground">
-            <Car size={24}/>
+        <div className="w-full bg-card border border-border/60 p-5 rounded-3xl flex items-center gap-5 active:scale-[0.98] transition-all hover:border-sky-500/50 cursor-pointer group shadow-sm hover:shadow-md overflow-hidden">
+          <div className="w-14 h-14 bg-gradient-to-br from-sky-500/20 to-cyan-500/20 border border-sky-500/20 rounded-2xl flex items-center justify-center text-sky-600 dark:text-sky-400 group-hover:from-sky-500 group-hover:to-cyan-500 group-hover:text-white transition-all duration-300 shrink-0">
+            <Plane size={26} strokeWidth={2} />
           </div>
           <div className="flex-1">
-            <h4 className="font-bold text-base text-muted-foreground">Car Rentals</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">Transport services arriving soon</p>
+            <h4 className="font-bold text-lg text-foreground leading-tight">Flights</h4>
+            <p className="text-[11px] text-muted-foreground mt-1 font-medium">Book global itineraries instantly</p>
           </div>
-          <div className="px-2 py-1 bg-muted rounded text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Soon</div>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground shrink-0 group-hover:translate-x-1 transition-transform">
+            <ChevronRight size={20} />
+          </div>
         </div>
+
+        <div className="w-full bg-card border border-border/60 p-5 rounded-3xl flex items-center gap-5 active:scale-[0.98] transition-all hover:border-purple-500/50 cursor-pointer group shadow-sm hover:shadow-md overflow-hidden">
+          <div className="w-14 h-14 bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 border border-purple-500/20 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:from-purple-500 group-hover:to-fuchsia-500 group-hover:text-white transition-all duration-300 shrink-0">
+            <Hotel size={26} strokeWidth={2} />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-bold text-lg text-foreground leading-tight">Hotels</h4>
+            <p className="text-[11px] text-muted-foreground mt-1 font-medium">Reserve luxury stays worldwide</p>
+          </div>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground shrink-0 group-hover:translate-x-1 transition-transform">
+            <ChevronRight size={20} />
+          </div>
+        </div>
+
+        {/* Coming Soon Row */}
+        <div className="w-full bg-card border border-border/60 border-dashed p-5 rounded-3xl flex items-center gap-5 cursor-not-allowed opacity-70">
+          <div className="w-14 h-14 bg-neutral-500/10 border border-neutral-500/20 rounded-2xl flex items-center justify-center text-neutral-500 shrink-0">
+            <Car size={26} strokeWidth={2} />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-bold text-lg text-muted-foreground leading-tight">Car Rentals</h4>
+            <p className="text-[11px] text-muted-foreground mt-1 font-medium">In Development</p>
+          </div>
+        </div>
+
       </div>
     </motion.div>
   );

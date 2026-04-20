@@ -5,7 +5,8 @@ import {
   Wifi, CreditCard, Star, CheckCircle2, Zap,
   Check, ArrowRight
 } from 'lucide-react';
-import { ESimPackage, ESimLocation } from '../types/esim';
+import { ESimPackage, ESimLocation } from '../types';
+import { useEsim } from '../hooks/useEsim';
 
 interface ESimProps {
   onBack: () => void;
@@ -15,68 +16,44 @@ interface ESimProps {
   user: any;
 }
 
-const MOCK_LOCATIONS: ESimLocation[] = [
-  { locationCode: 'TR', locationName: 'Turkey', type: 'country' },
-  { locationCode: 'AE', locationName: 'UAE', type: 'country' },
-  { locationCode: 'GB', locationName: 'United Kingdom', type: 'country' },
-  { locationCode: 'US', locationName: 'USA', type: 'country' },
-  { locationCode: 'FR', locationName: 'France', type: 'country' },
-  { locationCode: 'MY', locationName: 'Malaysia', type: 'country' },
-  { locationCode: 'DE', locationName: 'Germany', type: 'country' },
-  { locationCode: 'GLOBAL', locationName: 'Global', type: 'region' },
-  { locationCode: 'EUROPE', locationName: 'Europe', type: 'region' },
-  { locationCode: 'ASIA', locationName: 'Asia', type: 'region' },
-];
-
-const POPULAR_COUNTRIES = [
-  { code: 'TR', name: 'Turkey', flag: 'https://flagcdn.com/w80/tr.png' },
-  { code: 'AE', name: 'UAE', flag: 'https://flagcdn.com/w80/ae.png' },
-  { code: 'GB', name: 'United Kingdom', flag: 'https://flagcdn.com/w80/gb.png' },
-  { code: 'US', name: 'USA', flag: 'https://flagcdn.com/w80/us.png' },
-  { code: 'FR', name: 'France', flag: 'https://flagcdn.com/w80/fr.png' },
-  { code: 'MY', name: 'Malaysia', flag: 'https://flagcdn.com/w80/my.png' },
-];
-
-const MOCK_PACKAGES: Record<string, ESimPackage[]> = {
-  default: [
-    { packageCode: 'MOCK-1D-500', packageName: '500 MB', packageSlug: '500mb-1d', periodNum: 1, priceMinor: 5, type: 'data', currencyCode: 'USD', dataAmount: 500, locationCode: 'TR', locationName: 'Turkey', slug: '500mb-1d-slug' },
-    { packageCode: 'MOCK-1D-1G', packageName: '1 GB', packageSlug: '1gb-1d', periodNum: 1, priceMinor: 10, type: 'data', currencyCode: 'USD', dataAmount: 1024, locationCode: 'TR', locationName: 'Turkey', slug: '1gb-1d-slug' },
-    { packageCode: 'MOCK-7D-3G', packageName: '3 GB', packageSlug: '3gb-7d', periodNum: 7, priceMinor: 25, type: 'data', currencyCode: 'USD', dataAmount: 3072, locationCode: 'TR', locationName: 'Turkey', slug: '3gb-7d-slug' },
-    { packageCode: 'MOCK-7D-5G', packageName: '5 GB', packageSlug: '5gb-7d', periodNum: 7, priceMinor: 40, type: 'data', currencyCode: 'USD', dataAmount: 5120, locationCode: 'TR', locationName: 'Turkey', slug: '5gb-7d-slug' },
-    { packageCode: 'MOCK-15D-10G', packageName: '10 GB', packageSlug: '10gb-15d', periodNum: 15, priceMinor: 80, type: 'data', currencyCode: 'USD', dataAmount: 10240, locationCode: 'TR', locationName: 'Turkey', slug: '10gb-15d-slug' },
-    { packageCode: 'MOCK-30D-50G', packageName: '50 GB', packageSlug: '50gb-30d', periodNum: 30, priceMinor: 150, type: 'data', currencyCode: 'USD', dataAmount: 51200, locationCode: 'TR', locationName: 'Turkey', slug: '50gb-30d-slug' },
-    { packageCode: 'MOCK-ULTRA', packageName: 'Unlimited', packageSlug: 'unlimited', periodNum: 30, priceMinor: 756, type: 'data', currencyCode: 'USD', dataAmount: 999999, locationCode: 'TR', locationName: 'Turkey', slug: 'unlimited-slug' },
-  ]
-};
-
-const RECOMMENDED_PACKAGES = ['MOCK-7D-5G', 'MOCK-30D-50G'];
+const RECOMMENDED_PACKAGES = ['MOCK-TR-5G', 'MOCK-AE-5G'];
 
 const pkgDisplayData = (pkg: ESimPackage) => {
-  return pkg.dataAmount >= 1024 ? `${pkg.dataAmount / 1024} GB` : `${pkg.dataAmount} MB`;
+  const amount = Number(pkg.dataAmount);
+  return amount >= 1024 ? `${amount / 1024} GB` : `${amount} MB`;
 };
 
 export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark, user }: ESimProps) {
-  // States
+  // Hook for API logic
+  const { 
+    loading: apiLoading, 
+    locations, 
+    packages, 
+    fetchLocations, 
+    fetchPackages, 
+    purchasePackage 
+  } = useEsim();
+
+  // Component UI States
   const [tab, setTab] = useState<'countries' | 'regions'>('countries');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<ESimLocation | null>(null);
-  const [loadingPackages, setLoadingPackages] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<ESimPackage | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'fib' | 'loyalty'>('fib');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
 
+  useEffect(() => {
+    fetchLocations();
+  }, [fetchLocations]);
+
   const exchangeRate = 1320;
 
   const handleLocationSelect = (loc: ESimLocation) => {
     setSelectedLocation(loc);
     setSelectedPackage(null);
-    setLoadingPackages(true);
-    // Simulate loading
-    setTimeout(() => {
-      setLoadingPackages(false);
-    }, 600);
+    fetchPackages(loc.locationCode);
   };
 
   const formatPrice = (usdMinor: number) => {
@@ -86,14 +63,14 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
     return iqd.toLocaleString() + ' IQD';
   };
 
-  const filteredLocations = MOCK_LOCATIONS.filter(l => 
+  const filteredLocations = locations.filter(l => 
     l.type === (tab === 'countries' ? 'country' : 'region') &&
     l.locationName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const packages = MOCK_PACKAGES.default;
   const availableDays = useMemo(() => {
-    return Array.from(new Set(packages.map(p => p.periodNum))).sort((a, b) => a - b);
+    return Array.from(new Set(packages.map(p => p.periodNum)))
+      .sort((a, b) => (a as number) - (b as number));
   }, [packages]);
 
   useEffect(() => {
@@ -126,7 +103,7 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
+    <div className="absolute inset-0 flex flex-col bg-background">
       <AnimatePresence mode="wait">
         {!selectedLocation && !showCheckout && (
           <motion.div 
@@ -134,13 +111,13 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex-1 flex flex-col pt-safe bg-background px-6"
+            className="absolute inset-0 flex flex-col pt-safe bg-background px-6"
           >
             {/* Consistent Tulip Header */}
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center gap-4 mb-4 mt-6 shrink-0">
               <button 
                 onClick={onBack}
-                className="w-10 h-10 bg-card border border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors text-foreground"
+                className="w-10 h-10 bg-card border border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors text-foreground shadow-sm"
               >
                 <ArrowLeft size={20} />
               </button>
@@ -150,81 +127,83 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
               </div>
             </div>
 
-            {/* Premium Search */}
-            <div className="relative mb-8">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search country or region..."
-                className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {/* Popular Destinations Grid - Tulip Styling */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Popular</h3>
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+              {/* Premium Search */}
+              <div className="relative mb-8 mt-4">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Search country or region..."
+                  className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                {POPULAR_COUNTRIES.map((country) => (
-                  <motion.div 
-                    key={`popular-${country.code}`}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleLocationSelect({ locationCode: country.code, locationName: country.name, type: 'country' })}
-                    className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-3 cursor-pointer hover:border-primary/50 transition-all group active:shadow-md"
+
+              {/* Popular Destinations Grid - Tulip Styling */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Popular</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {locations.slice(0, 6).map((loc) => (
+                    <motion.div 
+                      key={`popular-${loc.locationCode}`}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleLocationSelect(loc)}
+                      className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-3 cursor-pointer hover:border-primary/50 transition-all group active:shadow-md"
+                    >
+                      <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm border border-border/50 group-hover:scale-105 transition-transform bg-muted">
+                        <img src={loc.flag} alt={loc.locationName} className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-[10px] font-black text-center text-foreground leading-tight">{loc.locationName}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tabs Selector - Consistent with Tulip Switchers */}
+              <div className="flex bg-muted p-1 rounded-2xl mb-6 sticky top-0 z-10 w-full backdrop-blur-md">
+                <button 
+                  onClick={() => setTab('countries')}
+                  className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'countries' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+                >
+                  Countries
+                </button>
+                <button 
+                  onClick={() => setTab('regions')}
+                  className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'regions' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+                >
+                  Regions
+                </button>
+              </div>
+
+              {/* Location List - Scrollable */}
+              <div className="full space-y-3">
+                {filteredLocations.map((loc, idx) => (
+                  <div 
+                    key={`${loc.locationCode}-${idx}`}
+                    onClick={() => handleLocationSelect(loc)}
+                    className="bg-card border border-border p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all group active:scale-[0.99]"
                   >
-                    <div className="w-12 h-10 rounded-lg overflow-hidden shadow-sm border border-border/50 group-hover:scale-105 transition-transform">
-                      <img src={country.flag} alt={country.name} className="w-full h-full object-cover" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors border-2 border-background shadow-sm overflow-hidden bg-muted">
+                        {loc.type === 'country' ? (
+                          <img 
+                            src={`https://hatscripts.github.io/circle-flags/flags/${loc.locationCode.toLowerCase()}.svg`} 
+                            alt={loc.locationCode}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Globe size={20} className="text-primary" />
+                        )}
+                      </div>
+                      <span className="font-bold text-sm tracking-tight text-foreground">{loc.locationName}</span>
                     </div>
-                    <span className="text-[10px] font-black text-center text-foreground leading-tight">{country.name}</span>
-                  </motion.div>
+                    <ChevronRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 ))}
               </div>
-            </div>
-
-            {/* Tabs Selector - Consistent with Tulip Switchers */}
-            <div className="flex bg-muted p-1 rounded-2xl mb-6">
-              <button 
-                onClick={() => setTab('countries')}
-                className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'countries' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
-              >
-                Countries
-              </button>
-              <button 
-                onClick={() => setTab('regions')}
-                className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'regions' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
-              >
-                Regions
-              </button>
-            </div>
-
-            {/* Location List - Scrollable */}
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-12 space-y-3">
-              {filteredLocations.map((loc, idx) => (
-                <div 
-                  key={`${loc.locationCode}-${idx}`}
-                  onClick={() => handleLocationSelect(loc)}
-                  className="bg-card border border-border p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all group active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
-                      {loc.type === 'country' ? (
-                        <img 
-                          src={`https://flagcdn.com/w80/${loc.locationCode.toLowerCase()}.png`} 
-                          alt={loc.locationCode}
-                          className="w-full h-full object-cover rounded-sm"
-                        />
-                      ) : (
-                        <Globe size={20} className="text-primary" />
-                      )}
-                    </div>
-                    <span className="font-bold text-sm tracking-tight text-foreground">{loc.locationName}</span>
-                  </div>
-                  <ChevronRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              ))}
             </div>
           </motion.div>
         )}
@@ -235,13 +214,13 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex-1 flex flex-col h-full bg-background pt-safe px-3"
+            className="absolute inset-0 flex flex-col bg-background pt-safe px-6"
           >
             {/* Detail Header */}
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center gap-4 mb-4 mt-6 shrink-0">
               <button 
                 onClick={() => setSelectedLocation(null)}
-                className="w-10 h-10 bg-card border border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors text-foreground"
+                className="w-10 h-10 bg-card border border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors text-foreground shadow-sm"
               >
                 <ArrowLeft size={20} />
               </button>
@@ -252,8 +231,8 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
             </div>
 
             {/* Grouped Minimalist List */}
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-32 space-y-10">
-              {loadingPackages ? (
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-40 space-y-10 pt-4">
+              {apiLoading ? (
                 Array(3).fill(0).map((_, i) => (
                   <div key={`pkg-group-skeleton-${i}`} className="space-y-4">
                     <div className="h-4 w-32 bg-muted rounded-full animate-pulse ml-2" />
@@ -340,7 +319,7 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="flex-1 flex flex-col h-full bg-background pt-safe px-3"
+            className="absolute inset-0 flex flex-col bg-background pt-safe px-3 z-50"
           >
             {!orderSuccess ? (
               <div className="flex-1 flex flex-col h-full">
@@ -355,7 +334,7 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
                   <h2 className="text-xl font-bold font-display leading-none text-foreground">Checkout</h2>
                 </div>
 
-                <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar space-y-6 pb-24">
+                <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar space-y-6 pb-40">
                   {/* Summary Card */}
                   <div className="bg-card border border-border rounded-3xl p-6 shadow-xl shadow-black/5">
                     <div className="flex items-center gap-5 mb-6 pb-6 border-b border-border/50">
@@ -392,14 +371,14 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
                   <div className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1">Payment Method</h3>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div 
                         onClick={() => setPaymentMethod('fib')}
-                        className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${paymentMethod === 'fib' ? 'bg-card border-primary shadow-lg ring-4 ring-primary/5' : 'bg-card border-border opacity-60'}`}
+                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between group ${paymentMethod === 'fib' ? 'bg-card border-primary shadow-lg ring-2 ring-primary/10' : 'bg-card border-border opacity-70 hover:opacity-100'}`}
                       >
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${paymentMethod === 'fib' ? 'bg-primary text-white' : 'bg-muted text-foreground'}`}>
-                            <CreditCard size={20} />
+                            <CreditCard size={18} />
                           </div>
                           <div>
                             <p className="font-bold text-sm text-foreground">FIB Bank Transfer</p>
@@ -413,11 +392,11 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
 
                       <div 
                         onClick={() => setPaymentMethod('loyalty')}
-                        className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${paymentMethod === 'loyalty' ? 'bg-card border-primary shadow-lg ring-4 ring-primary/5' : 'bg-card border-border opacity-60'}`}
+                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between group ${paymentMethod === 'loyalty' ? 'bg-card border-primary shadow-lg ring-2 ring-primary/10' : 'bg-card border-border opacity-70 hover:opacity-100'}`}
                       >
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${paymentMethod === 'loyalty' ? 'bg-primary text-white' : 'bg-muted text-foreground'}`}>
-                            <Star size={20} />
+                            <Star size={18} />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -458,7 +437,7 @@ export default function ESim({ onBack, onGoToBookings, setShowAuthModal, isDark,
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex-1 flex flex-col items-center justify-center text-center p-6"
               >
-                <div className="w-24 h-24 primary-gradient rounded-[32px] flex items-center justify-center text-white mb-8 shadow-2xl animate-bounce">
+                <div className="w-24 h-24 primary-gradient rounded-3xl flex items-center justify-center text-white mb-8 shadow-2xl animate-bounce">
                   <CheckCircle2 size={48} />
                 </div>
                 <h2 className="text-3xl font-black font-display tracking-tight mb-4 text-foreground">Successful!</h2>

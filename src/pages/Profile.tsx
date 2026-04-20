@@ -20,13 +20,28 @@ export default function Profile({ isDark, setIsDark, setShowSupportChat, setShow
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const [editPhoto, setEditPhoto] = useState(profile?.photoURL || '');
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Create a temporary local blob URL for immediate preview
+      const imageUrl = URL.createObjectURL(file);
+      setEditPhoto(imageUrl);
+      // In a real implementation with Firebase Storage:
+      // const uploadUrl = await uploadAvatarToStorage(file);
+      // setEditPhoto(uploadUrl);
+    }
+  };
+
   const handleSaveInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       await updateProfile({
         displayName: editName,
-        email: editEmail
+        email: editEmail,
+        photoURL: editPhoto
       });
       setSaveSuccess(true);
       setTimeout(() => {
@@ -58,6 +73,35 @@ export default function Profile({ isDark, setIsDark, setShowSupportChat, setShow
       </div>
 
       <form onSubmit={handleSaveInfo} className="space-y-5 mt-6">
+        {/* Avatar Upload */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative group cursor-pointer mb-3">
+             <input 
+               type="file" 
+               accept="image/*"
+               onChange={handlePhotoUpload}
+               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+             />
+             <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-dashed border-primary/30 flex items-center justify-center overflow-hidden relative group-hover:border-primary/60 transition-colors">
+               {editPhoto ? (
+                 <img src={editPhoto} alt="Avatar" className="w-full h-full object-cover" />
+               ) : (
+                 <div className="w-full h-full bg-muted flex items-center justify-center text-primary font-bold text-2xl">
+                   {editName ? editName.charAt(0).toUpperCase() : <User size={32} className="text-muted-foreground opacity-50" />}
+                 </div>
+               )}
+               {/* Overlay */}
+               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 <Edit2 size={24} className="text-white" />
+               </div>
+             </div>
+             <div className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg pointer-events-none">
+               <Edit2 size={12} />
+             </div>
+          </div>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Update Photo</span>
+        </div>
+
         {/* Name Field */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Full Name</label>
@@ -130,7 +174,7 @@ export default function Profile({ isDark, setIsDark, setShowSupportChat, setShow
   );
 
   return (
-    <motion.div key="profile" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+    <motion.div key="profile" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="h-full flex flex-col pt-2 overflow-hidden">
       <AnimatePresence mode="wait">
         {!isEditingInfo ? (
           <motion.div 
@@ -138,15 +182,22 @@ export default function Profile({ isDark, setIsDark, setShowSupportChat, setShow
             initial={{ x: -20, opacity: 0 }} 
             animate={{ x: 0, opacity: 1 }} 
             exit={{ x: 20, opacity: 0 }}
+            className={`flex flex-col ${user ? 'no-scrollbar overflow-y-auto pb-24 h-full' : ''}`}
           >
             <h2 className="text-3xl font-display font-bold mb-8">Profile</h2>
             
             {user ? (
-              <>
+              <div className="flex flex-col gap-6">
                 {/* Logged in User Info Card */}
-                <div className="bg-card border border-border rounded-3xl p-6 mb-8 flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center p-0.5 relative">
-                    <img src={profile?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                <div className="bg-card border border-border rounded-3xl p-6 flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border">
+                    {profile?.photoURL ? (
+                      <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full primary-gradient flex items-center justify-center text-white font-black text-xl">
+                        {profile?.displayName ? profile.displayName.charAt(0).toUpperCase() : 'T'}
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <h3 className="font-bold text-lg leading-tight truncate">
@@ -161,6 +212,7 @@ export default function Profile({ isDark, setIsDark, setShowSupportChat, setShow
                          onClick={() => {
                            setEditName(profile?.displayName || '');
                            setEditEmail('');
+                           setEditPhoto(profile?.photoURL || '');
                            setIsEditingInfo(true);
                          }}
                          className="text-[10px] bg-primary text-white hover:brightness-110 px-3 py-1.5 rounded-lg mt-2 inline-flex items-center gap-1.5 font-bold uppercase tracking-wide transition-all active:scale-95 shadow-sm"
@@ -229,15 +281,15 @@ export default function Profile({ isDark, setIsDark, setShowSupportChat, setShow
                       </div>
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
-              <div className="bg-card border border-border rounded-3xl p-8 flex flex-col items-center justify-center text-center mt-12 shadow-xl">
-                <div className="w-20 h-20 primary-gradient rounded-full flex items-center justify-center text-white mb-6">
-                  <User size={32} />
+              <div className="flex-1 flex flex-col items-center justify-center text-center -mt-8">
+                <div className="w-24 h-24 bg-card border border-border rounded-3xl flex items-center justify-center text-muted-foreground mb-8 shadow-2xl glass-shimmer">
+                  <User size={40} strokeWidth={1.5} />
                 </div>
                 <h3 className="text-xl font-bold mb-2">Create your Profile</h3>
-                <p className="text-muted-foreground mb-8 text-sm px-4">Sign in or sign up securely via OTP to manage preferences, access 24/7 support, and view trips.</p>
-                <button onClick={() => setShowAuthModal(true)} className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm hover:brightness-110 shadow-lg shadow-primary/20 transition-all active:scale-95">
+                <p className="text-muted-foreground mb-8 text-sm px-4 max-w-[260px] mx-auto">Sign in securely via OTP to manage preferences, access 24/7 support, and view trips.</p>
+                <button onClick={() => setShowAuthModal(true)} className="w-full max-w-[260px] mx-auto primary-gradient text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.15em] shadow-lg shadow-primary/20 transition-all active:scale-95">
                   Secure Sign In / Sign Up
                 </button>
               </div>

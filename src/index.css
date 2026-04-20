@@ -3,6 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer base {
+  html, body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+}
+
 :root {
   --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-display: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -177,4 +184,10 @@
 
 @utility mb-safe {
   margin-bottom: env(safe-area-inset-bottom);
+}
+
+@layer base {
+  *, ::after, ::before {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
